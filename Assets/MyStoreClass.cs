@@ -6,8 +6,9 @@ public class MyStoreClass : MonoBehaviour, IStoreListener
 {
     
     // Loading the sku of the parent subscription so we can get the receipt later. Unity IAP won't return receipts
-    // for the "subcription term" skus. The receipt is always null for subscription terms.
-    static string kProductSubscription = "premium.subscription.notrial";
+    // for the "subscription term" skus. The receipt is always null for subscription terms.
+    static string kProductSubscription = "premium.subscription";
+    static string kProductSubscriptionMonthly = "premium.subscription.monthly";
     
     IStoreController m_StoreController;
     private static IExtensionProvider storeExtensionProvider; // The store-specific Purchasing subsystems.
@@ -15,6 +16,7 @@ public class MyStoreClass : MonoBehaviour, IStoreListener
     {
         ConfigurationBuilder builder = ConfigurationBuilder.Instance(StandardPurchasingModule.Instance());
         builder.AddProduct(kProductSubscription, ProductType.Subscription);
+        builder.AddProduct(kProductSubscriptionMonthly, ProductType.Subscription);
         // If wanting to offer just the "weekly" product, load it too and offer that for purchase
         UnityPurchasing.Initialize(this, builder);
     }
@@ -33,7 +35,9 @@ public class MyStoreClass : MonoBehaviour, IStoreListener
                 purchases.SyncObserverModeAmazonPurchase(
                     product.definition.id,
                     product.transactionID,
-                    userId
+                    userId,
+                    product.metadata.isoCurrencyCode,
+                    Decimal.ToDouble(product.metadata.localizedPrice)
                 );
             }
         }
@@ -44,7 +48,7 @@ public class MyStoreClass : MonoBehaviour, IStoreListener
         if (m_StoreController != null)
         {
             // Fetch the currency Product reference from Unity Purchasing
-            Product product = m_StoreController.products.WithID(kProductSubscription);
+            Product product = m_StoreController.products.WithID(kProductSubscriptionMonthly);
             if (product != null && product.availableToPurchase)
             {
                 m_StoreController.InitiatePurchase(product);
@@ -62,7 +66,9 @@ public class MyStoreClass : MonoBehaviour, IStoreListener
         purchases.SyncObserverModeAmazonPurchase(
             e.purchasedProduct.definition.id,
             e.purchasedProduct.transactionID,
-            userId
+            userId,
+            e.purchasedProduct.metadata.isoCurrencyCode,
+            Decimal.ToDouble(e.purchasedProduct.metadata.localizedPrice)
         );
         return PurchaseProcessingResult.Complete;
     }
