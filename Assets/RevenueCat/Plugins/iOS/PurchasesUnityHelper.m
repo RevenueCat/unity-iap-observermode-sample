@@ -76,7 +76,7 @@ char *makeStringCopy(NSString *nstring) {
                       platformFlavor:self.platformFlavor
                platformFlavorVersion:self.platformFlavorVersion
                    dangerousSettings:dangerousSettings];
-
+    
     self.gameObject = gameObject;
     [[RCPurchases sharedPurchases] setDelegate:self];
 }
@@ -136,7 +136,7 @@ char *makeStringCopy(NSString *nstring) {
 - (void)syncPurchases {
     // on Android, syncPurchases doesn't have a completion block. So instead of
     // calling getPurchaserInfoCompletionBlockFor:SYNC_PURCHASES, we just
-    // print the response, to match Android behavior.
+    // print the response, to match Android behavior. 
     [RCCommonFunctionality syncPurchasesWithCompletionBlock:^(NSDictionary *_Nullable responseDictionary, RCErrorContainer *_Nullable error) {
         NSLog(@"received syncPurchases response: \n purchaserInfo: %@ \n error:%@", responseDictionary, error);
     }];
@@ -183,14 +183,17 @@ char *makeStringCopy(NSString *nstring) {
         } else {
             response[@"offerings"] = responseDictionary;
         }
-
+        
         [self sendJSONObject:response toMethod:GET_OFFERINGS];
     }];
 }
 
-- (void)syncObserverModeAmazonPurchase:(NSString *)productID
+- (void)syncObserverModeAmazonPurchase:(NSString *)productID 
                              receiptID:(NSString *)receiptID
-                          amazonUserID:(NSString *)amazonUserID {
+                          amazonUserID:(NSString *)amazonUserID
+                       isoCurrencyCode:(NSString *)isoCurrencyCode
+                                 price:(double)price
+                           {
     // noop
 }
 
@@ -253,11 +256,11 @@ char *makeStringCopy(NSString *nstring) {
 
 - (void)canMakePaymentsWithFeatures:(NSArray<NSNumber *> *)features {
     BOOL canMakePayments = [RCCommonFunctionality canMakePaymentsWithFeatures:features];
-
+    
     NSDictionary *response = @{
         @"canMakePayments": @(canMakePayments)
     };
-
+    
     [self sendJSONObject:response toMethod:CAN_MAKE_PAYMENTS];
 }
 #pragma mark - Subcriber Attributes
@@ -365,11 +368,11 @@ char *makeStringCopy(NSString *nstring) {
     };
 }
 
-- (NSString *)platformFlavor {
+- (NSString *)platformFlavor { 
     return @"unity";
 }
 
-- (NSString *)platformFlavorVersion {
+- (NSString *)platformFlavorVersion { 
     return @"3.2.0-amazon.alpha";
 }
 
@@ -531,12 +534,12 @@ void _RCSetAttributes(const char* attributesJSON) {
     NSDictionary *attributes = [NSJSONSerialization JSONObjectWithData:attributesAsData
                                                                options:0
                                                                  error:&error];
-
+    
     if (error) {
         NSLog(@"Error parsing attributes JSON: %s %@", attributesJSON, error.localizedDescription);
         return;
     }
-
+    
     [_RCUnityHelperShared() setAttributes:attributes];
 }
 
@@ -606,7 +609,7 @@ void _RCCollectDeviceIdentifiers() {
 
 void _RCCanMakePayments(const char *featuresJSON) {
     NSError *error = nil;
-
+    
     NSData *data = [convertCString(featuresJSON) dataUsingEncoding:NSUTF8StringEncoding];
     NSDictionary *canMakePaymentsRequest = [NSJSONSerialization JSONObjectWithData:data
                                                                            options:0
@@ -620,8 +623,11 @@ void _RCCanMakePayments(const char *featuresJSON) {
     [_RCUnityHelperShared() canMakePaymentsWithFeatures:canMakePaymentsRequest[@"features"]];
 }
 
-void _RCSyncObserverModeAmazonPurchase(const char *productID, const char *receiptID, const char *amazonUserID) {
+void _RCSyncObserverModeAmazonPurchase(const char *productID, const char *receiptID, const char *amazonUserID, 
+    const char *isoCurrencyCode, double price) {
     [_RCUnityHelperShared() syncObserverModeAmazonPurchase:convertCString(productID)
                                                  receiptID:convertCString(receiptID)
-                                              amazonUserID:convertCString(amazonUserID)];
+                                              amazonUserID:convertCString(amazonUserID)
+                                          isoCurrencyCode:convertCString(isoCurrencyCode)
+                                                    price:price];
 }
